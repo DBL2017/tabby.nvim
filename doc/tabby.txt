@@ -388,6 +388,11 @@ line.bufs()                                        *tabby.line.bufs().foreach()*
     Return: ~
         |tabby-bufs|, a helper object for all bufs.
 
+    The order of newly listed buffers can be configured with
+    |tabby-customize-line-option|. Existing buffers retain their current order.
+    For example, use `option = { buf_new_position = 'next' }` to insert a new
+    buffer after the previously current buffer.
+
 line.spacer()                                              *tabby.line.spacer()*
     Separation point between alignment sections. Each section will be separated
     by an equal number of spaces.
@@ -439,9 +444,17 @@ The default value of LineOption is:
           return '[No Name]'
           end,
         override = nil,
-      }
+      },
+      buf_new_position = 'last',
     }
 <
+
+- {buf_new_position}, placement of newly listed buffers when using
+    `line.bufs()`
+    - `'next'`: insert after the buffer that was current before entering the new
+        buffer.
+    - `'first'`: insert at the start of the buffer list.
+    - `'last'`: insert at the end of the buffer list (default).
 
 - {tab_name}, option for name of tab
     - {name_fallback} (fun(tabid:number):string) Function, receive a tab id,

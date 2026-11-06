@@ -1,6 +1,91 @@
 local M = {}
 local api = require('tabby.module.api')
 
+local buf_order = api.get_bufs()
+local current_buf = vim.api.nvim_get_current_buf()
+local last_current_buf = current_buf
+if not vim.bo[current_buf].buflisted then
+  local alternate_buf = vim.fn.bufnr('#')
+  if alternate_buf > 0 and vim.bo[alternate_buf].buflisted then
+    last_current_buf = alternate_buf
+  else
+    for _, winid in ipairs(api.get_wins()) do
+      local win_buf = api.get_win_buf(winid)
+      if vim.bo[win_buf].buflisted then
+        last_current_buf = win_buf
+        break
+      end
+    end
+  end
+end
+local new_buf_position = 'last'
+local buf_order_group = vim.api.nvim_create_augroup('TabbyBufferOrder', { clear = true })
+
+local function get_buf_order_index(bufid)
+  for index, id in ipairs(buf_order) do
+    if id == bufid then
+      return index
+    end
+  end
+end
+
+local function insert_buf(bufid)
+  if get_buf_order_index(bufid) then
+    return
+  end
+
+  if new_buf_position == 'first' then
+    table.insert(buf_order, 1, bufid)
+  elseif new_buf_position == 'next' then
+    local current_index = get_buf_order_index(last_current_buf)
+    local insert_at = current_index and current_index + 1 or #buf_order + 1
+    table.insert(buf_order, insert_at, bufid)
+  else
+    buf_order[#buf_order + 1] = bufid
+  end
+end
+
+local function remove_buf(bufid)
+  local index = get_buf_order_index(bufid)
+  if index then
+    table.remove(buf_order, index)
+  end
+end
+
+function M.set_new_buf_position(position)
+  new_buf_position = position or 'last'
+  assert(
+    new_buf_position == 'next' or new_buf_position == 'first' or new_buf_position == 'last',
+    "buf_new_position must be 'next', 'first', or 'last'"
+  )
+end
+
+vim.api.nvim_create_autocmd('BufEnter', {
+  group = buf_order_group,
+  callback = function(event)
+    if vim.api.nvim_buf_is_valid(event.buf) and vim.bo[event.buf].buflisted then
+      insert_buf(event.buf)
+      last_current_buf = event.buf
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd('BufAdd', {
+  group = buf_order_group,
+  callback = function(event)
+    if vim.api.nvim_buf_is_valid(event.buf) and vim.bo[event.buf].buflisted then
+      insert_buf(event.buf)
+    end
+  end,
+})
+
+vim.api.nvim_create_autocmd({ 'BufDelete', 'BufWipeout' }, {
+  group = buf_order_group,
+  callback = function(event)
+    remove_buf(event.buf)
+  end,
+})
+
 ---@class TabbyBuf
 ---@field id number buffer id
 ---@field is_current fun():boolean return if buffer is a buffer of the current window
@@ -98,6 +183,21 @@ end
 ---@param opt TabbyLineOption
 ---@return TabbyBufs
 function M.new_bufs(bufs, opt)
+  opt = opt or {}
+  M.set_new_buf_position(opt.buf_new_position)
+
+  for _, buf in ipairs(bufs) do
+    insert_buf(buf.id)
+  end
+
+  local order = {}
+  for index, bufid in ipairs(buf_order) do
+    order[bufid] = index
+  end
+  table.sort(bufs, function(a, b)
+    return order[a.id] < order[b.id]
+  end)
+
   local obj = { ---@type TabbyBufs
     bufs = bufs,
     filter = function(filter)

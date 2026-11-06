@@ -1,5 +1,6 @@
 local builder = require('tabby.module.builder')
 local lines = require('tabby.feature.lines')
+local bufs = require('tabby.feature.bufs')
 local tab_name = require('tabby.feature.tab_name')
 local win_picker = require('tabby.feature.win_picker')
 local tab_jumper = require('tabby.feature.tab_jumper')
@@ -17,6 +18,7 @@ tabline.cfg = {
 ---@param fn fun(line:TabbyLine):TabbyElement
 ---@param opt? TabbyLineOption
 function tabline.set(fn, opt)
+  bufs.set_new_buf_position(opt and opt.buf_new_position)
   tabline.cfg = {
     fn = fn,
     opt = opt,

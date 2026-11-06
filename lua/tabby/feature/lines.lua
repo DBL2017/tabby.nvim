@@ -29,6 +29,7 @@ end
 ---@class TabbyLineOption
 ---@field tab_name? TabbyTabNameOption
 ---@field buf_name? TabbyBufNameOption
+---@field buf_new_position? 'next'|'first'|'last' where new listed buffers are placed
 
 ---get line object
 ---@param opt? TabbyLineOption
