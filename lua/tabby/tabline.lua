@@ -40,11 +40,15 @@ function tabline.init()
       win_picker.select()
     elseif opts.fargs[1] == 'jump_to_tab' then
       tab_jumper.start()
+    elseif opts.fargs[1] == 'next_buf' then
+      bufs.next_buf()
+    elseif opts.fargs[1] == 'prev_buf' then
+      bufs.prev_buf()
     end
   end, {
     nargs = '+',
     complete = function(_, _, _)
-      return { 'rename_tab', 'pick_window', 'jump_to_tab' }
+      return { 'rename_tab', 'pick_window', 'jump_to_tab', 'next_buf', 'prev_buf' }
     end,
   })
 end

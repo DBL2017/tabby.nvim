@@ -52,6 +52,56 @@ local function remove_buf(bufid)
   end
 end
 
+local function get_ordered_bufs()
+  for _, bufid in ipairs(api.get_bufs()) do
+    insert_buf(bufid)
+  end
+
+  return vim.tbl_filter(function(bufid)
+    return vim.api.nvim_buf_is_valid(bufid) and vim.bo[bufid].buflisted
+  end, buf_order)
+end
+
+local function jump_buf(step)
+  local ordered_bufs = get_ordered_bufs()
+  if #ordered_bufs == 0 then
+    return
+  end
+
+  local current_index
+  local current_buf = vim.api.nvim_get_current_buf()
+  for index, bufid in ipairs(ordered_bufs) do
+    if bufid == current_buf then
+      current_index = index
+      break
+    end
+  end
+
+  if current_index == nil then
+    for index, bufid in ipairs(ordered_bufs) do
+      if bufid == last_current_buf then
+        current_index = index
+        break
+      end
+    end
+  end
+
+  if current_index == nil then
+    current_index = step > 0 and 0 or #ordered_bufs + 1
+  end
+
+  local target_index = ((current_index - 1 + step) % #ordered_bufs) + 1
+  vim.api.nvim_set_current_buf(ordered_bufs[target_index])
+end
+
+function M.next_buf()
+  jump_buf(1)
+end
+
+function M.prev_buf()
+  jump_buf(-1)
+end
+
 function M.set_new_buf_position(position)
   new_buf_position = position or 'last'
   assert(

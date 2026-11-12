@@ -240,6 +240,9 @@ If you want to quick start? That's fine, you can [Use Preset Configs](#Use-Prese
 - `Tabby pick_window`: Open a selector to pick window in tabpages.
 - `Tabby jump_to_tab`: Get one key to jump to tabpage, each keys are displayed
   in tabline by `tab.jump_key()`
+- `Tabby next_buf` / `Tabby prev_buf`: Move to the next/previous listed buffer
+  in the configured `line.bufs()` order, wrapping at either end. The native
+  `:bnext` and `:bprev` commands keep their Neovim buffer-list behavior.
 
 ### Key mapping example
 
